@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>لوحة الإدارة — حِسبة عَرَب</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1E2E29; --ink-2:#243A31; --paper:#F3E9D2; --card:#FFFFFF;
+  --brass:#1F7A4D; --brass-2:#4FCB8C; --debt:#A6432E; --debt-soft:#F0DACD;
+  --paid:#3D6B52; --paid-soft:#DCE7DE; --text:#2A2118; --muted:#8C7F63;
+  --border:rgba(42,33,24,.16);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Cairo',sans-serif;background:var(--paper);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+button,input,select{font-family:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.hidden{display:none !important}
+
+/* login */
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(180deg,var(--ink),var(--ink-2))}
+.gate-card{background:var(--paper);border-radius:18px;padding:30px 26px;width:100%;max-width:360px;text-align:center;box-shadow:0 30px 60px -20px rgba(0,0,0,.55)}
+.gate-card h1{font-family:'Amiri',serif;font-size:26px;margin:0 0 4px}
+.gate-card p{font-size:13px;color:var(--muted);margin:0 0 18px}
+.gate-card input{width:100%;padding:12px 13px;margin-bottom:8px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:15px;text-align:center}
+.err{min-height:20px;color:var(--debt);font-size:13px;margin:4px 0 8px}
+
+/* buttons */
+.btn{border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:13.5px;cursor:pointer;min-height:40px}
+.btn-main{background:var(--brass);color:#fff;width:100%}
+.btn-light{background:#fff;color:#3c4043;border:1px solid var(--border);width:100%;margin-top:8px}
+.btn-ghost{background:rgba(241,233,214,.1);color:#F1E9D6;border:1px solid rgba(241,233,214,.2)}
+.btn-sm{padding:6px 12px;min-height:32px;font-size:12.5px;border-radius:8px}
+.btn-danger{background:var(--debt);color:#fff}
+.btn-ok{background:var(--paid);color:#fff}
+
+/* header */
+header{background:linear-gradient(180deg,var(--ink),var(--ink-2));color:#F1E9D6;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-family:'Amiri',serif;font-size:24px;color:var(--brass-2)}
+header .who{font-size:12.5px;color:#B9C6BD;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:22px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.stat small{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+.stat b{font-size:24px;font-weight:800}
+.stat.warn b{color:var(--debt)}
+.privacy-note{background:var(--paid-soft);color:var(--paid);border-radius:10px;padding:10px 14px;font-size:12.5px;margin-bottom:18px;line-height:1.7}
+
+/* toolbar + table */
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.bar input,.bar select{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:14px}
+.bar input{flex:1;min-width:200px}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px}
+th,td{padding:11px 12px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
+th{background:#F7F1E1;font-weight:700;color:var(--muted);font-size:12.5px;position:sticky;top:0}
+tr:last-child td{border-bottom:none}
+td.name{white-space:normal;min-width:180px}
+td.name small{display:block;color:var(--muted);direction:ltr;text-align:right}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:#F7F1E1;color:var(--muted)}
+.tag.blocked{background:var(--debt-soft);color:var(--debt)}
+.tag.guest{background:#EEE;color:#666}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+.foot{margin-top:10px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- تسجيل الدخول -->
+<section class="gate" id="gate">
+  <div class="gate-card">
+    <h1>لوحة الإدارة</h1>
+    <p>حِسبة عَرَب — للمالك فقط</p>
+    <input id="email" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
+    <input id="pass" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn btn-main" id="btnLogin">تسجيل الدخول</button>
+    <button class="btn btn-light" id="btnGoogle">تسجيل الدخول بجوجل</button>
+  </div>
+</section>
+
+<!-- اللوحة -->
+<div id="dash" class="hidden">
+  <header>
+    <h1>لوحة إدارة حِسبة عَرَب</h1>
+    <div class="who"><span id="who"></span><button class="btn btn-sm btn-ghost" id="btnOut">تسجيل الخروج</button></div>
+  </header>
+  <main>
+    <div class="privacy-note">اللوحة تعرض بيانات الحسابات والأرقام المجمّعة فقط (عدد الأشخاص والحركات). لا تعرض أسماء مدينيك ولا مبالغهم.</div>
+    <div class="stats" id="stats"></div>
+
+    <div class="bar">
+      <input id="q" type="search" placeholder="ابحث بالاسم أو البريد">
+      <select id="filter">
+        <option value="all">كل الحسابات</option>
+        <option value="reg">حسابات مسجّلة</option>
+        <option value="guest">زوّار</option>
+        <option value="blocked">محظورة</option>
+        <option value="active7">نشطة آخر 7 أيام</option>
+      </select>
+      <select id="sort">
+        <option value="login">آخر دخول</option>
+        <option value="created">تاريخ التسجيل</option>
+        <option value="people">عدد الأشخاص</option>
+      </select>
+      <button class="btn btn-sm btn-ok" id="btnCsv">تصدير CSV</button>
+      <button class="btn btn-sm" id="btnReload" style="background:#fff;border:1px solid var(--border)">تحديث</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>المستخدم</th><th>النوع</th><th>تاريخ التسجيل</th><th>آخر دخول</th>
+          <th>الأشخاص</th><th>الحركات</th><th>الحالة</th><th>إجراء</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty hidden" id="empty">لا توجد حسابات مطابقة.</div>
+    </div>
+    <p class="foot" id="foot"></p>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyBsD0dPMTgGnZe1XVUi16R4Gfhjc29JCJ4",
+  authDomain: "hisbet-arab-2011.firebaseapp.com",
+  projectId: "hisbet-arab-2011",
+  storageBucket: "hisbet-arab-2011.firebasestorage.app",
+  messagingSenderId: "140485481045",
+  appId: "1:140485481045:web:265daacc421758bd3f7adc"
+});
+const auth = firebase.auth(), db = firebase.firestore();
+const $ = id => document.getElementById(id);
+let USERS = [];
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toDate(v){
+  if(!v) return null;
+  if(v.toDate) return v.toDate();
+  const d = new Date(v); return isNaN(d) ? null : d;
+}
+const fmtDate = d => d ? d.toLocaleDateString('ar-JO',{year:'numeric',month:'short',day:'numeric'}) : '—';
+const num = n => (Number(n)||0).toLocaleString('en-US');
+
+/* ---------- Auth ---------- */
+function showErr(m){ $('err').textContent = m || ''; }
+$('btnLogin').onclick = async () => {
+  showErr('');
+  try{ await auth.signInWithEmailAndPassword($('email').value.trim(), $('pass').value); }
+  catch(e){ showErr('تعذّر تسجيل الدخول، تحقق من البيانات.'); }
+};
+$('btnGoogle').onclick = async () => {
+  showErr('');
+  try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+  catch(e){ if(e.code !== 'auth/popup-closed-by-user') showErr('تعذّر تسجيل الدخول بجوجل.'); }
+};
+$('btnOut').onclick = () => auth.signOut();
+$('pass').addEventListener('keydown', e => { if(e.key === 'Enter') $('btnLogin').click(); });
+
+auth.onAuthStateChanged(async user => {
+  if(!user){ $('dash').classList.add('hidden'); $('gate').classList.remove('hidden'); return; }
+  try{
+    // الأدمن = وجود وثيقة admins/{uid} (تُنشأ يدوياً من Firebase Console)
+    const snap = await db.collection('admins').doc(user.uid).get();
+    if(!snap.exists) throw new Error('not-admin');
+  }catch(e){
+    await auth.signOut();
+    showErr('هذا الحساب لا يملك صلاحية الإدارة.');
+    return;
+  }
+  $('who').textContent = user.email || '';
+  $('gate').classList.add('hidden');
+  $('dash').classList.remove('hidden');
+  loadUsers();
+});
+
+/* ---------- Data ---------- */
+async function loadUsers(){
+  $('foot').textContent = 'جارِ التحميل…';
+  try{
+    const snap = await db.collection('profiles').get();
+    USERS = snap.docs.map(d => {
+      const x = d.data();
+      return {
+        uid: d.id, name: x.name || '', email: x.email || '', guest: !!x.isAnonymous,
+        blocked: !!x.blocked, people: Number(x.peopleCount)||0, entries: Number(x.entriesCount)||0,
+        created: toDate(x.createdAt), login: toDate(x.lastLoginAt)
+      };
+    });
+    renderStats(); renderRows();
+    $('foot').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-JO');
+  }catch(e){
+    console.error(e);
+    $('foot').textContent = 'تعذّر تحميل البيانات. تأكد من نشر قواعد Firestore وأن حسابك مضاف في مجموعة admins.';
+  }
+}
+
+function renderStats(){
+  const now = Date.now(), day = 86400000;
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+  const total = USERS.length;
+  const guests = USERS.filter(u => u.guest).length;
+  const active7 = USERS.filter(u => u.login && now - u.login < 7*day).length;
+  const newMonth = USERS.filter(u => u.created && u.created >= monthStart).length;
+  const blocked = USERS.filter(u => u.blocked).length;
+  const people = USERS.reduce((s,u) => s + u.people, 0);
+  const entries = USERS.reduce((s,u) => s + u.entries, 0);
+  const cards = [
+    ['إجمالي الحسابات', total], ['حسابات مسجّلة', total - guests], ['زوّار', guests],
+    ['نشطة آخر 7 أيام', active7], ['جديدة هذا الشهر', newMonth],
+    ['إجمالي الأشخاص', people], ['إجمالي الحركات', entries], ['محظورة', blocked, blocked > 0]
+  ];
+  $('stats').innerHTML = cards.map(c =>
+    '<div class="stat'+(c[2]?' warn':'')+'"><small>'+c[0]+'</small><b>'+num(c[1])+'</b></div>').join('');
+}
+
+function visibleUsers(){
+  const q = $('q').value.trim().toLowerCase(), f = $('filter').value, s = $('sort').value;
+  const now = Date.now();
+  let list = USERS.filter(u => {
+    if(q && !(u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))) return false;
+    if(f === 'reg') return !u.guest;
+    if(f === 'guest') return u.guest;
+    if(f === 'blocked') return u.blocked;
+    if(f === 'active7') return u.login && now - u.login < 7*86400000;
+    return true;
+  });
+  const t = d => d ? d.getTime() : 0;
+  list.sort((a,b) => s === 'people' ? b.people - a.people : s === 'created' ? t(b.created) - t(a.created) : t(b.login) - t(a.login));
+  return list;
+}
+
+function renderRows(){
+  const list = visibleUsers();
+  $('empty').classList.toggle('hidden', list.length > 0);
+  $('rows').innerHTML = list.map(u =>
+    '<tr>'
+    +'<td class="name"><b>'+esc(u.name || (u.guest ? 'زائر' : '—'))+'</b><small>'+esc(u.email || u.uid.slice(0,10)+'…')+'</small></td>'
+    +'<td>'+(u.guest ? '<span class="tag guest">زائر</span>' : '<span class="tag">مسجّل</span>')+'</td>'
+    +'<td>'+fmtDate(u.created)+'</td><td>'+fmtDate(u.login)+'</td>'
+    +'<td>'+num(u.people)+'</td><td>'+num(u.entries)+'</td>'
+    +'<td>'+(u.blocked ? '<span class="tag blocked">محظور</span>' : '<span class="tag">نشط</span>')+'</td>'
+    +'<td><button class="btn btn-sm '+(u.blocked?'btn-ok':'btn-danger')+'" data-uid="'+esc(u.uid)+'">'+(u.blocked?'إلغاء الحظر':'حظر')+'</button></td>'
+    +'</tr>').join('');
+}
+
+$('rows').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-uid]'); if(!b) return;
+  const u = USERS.find(x => x.uid === b.dataset.uid); if(!u) return;
+  const msg = u.blocked ? 'إلغاء حظر هذا الحساب؟' : 'سيُمنع هذا الحساب من الوصول إلى بياناته. متابعة؟';
+  if(!confirm(msg)) return;
+  b.disabled = true;
+  try{
+    await db.collection('profiles').doc(u.uid).update(
+      u.blocked ? {blocked:false} : {blocked:true, blockedAt:firebase.firestore.FieldValue.serverTimestamp()}
+    );
+    u.blocked = !u.blocked;
+    renderStats(); renderRows();
+  }catch(err){ alert('تعذّر تنفيذ العملية.'); b.disabled = false; }
+});
+
+['q','filter','sort'].forEach(id => $(id).addEventListener('input', renderRows));
+$('btnReload').onclick = loadUsers;
+
+$('btnCsv').onclick = () => {
+  const head = ['name','email','type','created','last_login','people','entries','blocked'];
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+  const lines = [head.join(',')].concat(visibleUsers().map(u => [
+    u.name, u.email, u.guest ? 'guest' : 'registered',
+    u.created ? u.created.toISOString().slice(0,10) : '', u.login ? u.login.toISOString().slice(0,10) : '',
+    u.people, u.entries, u.blocked ? 'yes' : 'no'
+  ].map(q).join(',')));
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'hisbet-users-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+};
+</script>
+</body>
+</html>

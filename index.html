@@ -647,7 +647,7 @@ const I18N = {
 ar:{
 appName:'حِسبة عَرَب', authMsgTitle:'رسالتنا', authMsg1:'الدَّين أمانة، وتدوينه حفظٌ للحقوق وصونٌ للعلاقات بين الناس.', authMsg2:'حسابٌ واضح ودقيق يغنيك عن الذاكرة والأوراق المبعثرة.', authMsg3:'نضع دفترك بين يديك أينما كنت، لتبقى المودة وتُصان الحقوق.', authGoalTitle:'هدفنا', authGoal1:'تمكينك من تسجيل الديون والدفعات لكل شخص بسهولة ودقة.', authGoal2:'متابعة المبالغ المتبقية والاستحقاقات وتذكير أصحابها في الوقت المناسب.', authGoal3:'حفظ بياناتك بأمان وإتاحتها لك على جميع أجهزتك.', privacyLink:'سياسة الخصوصية', termsLink:'الشروط والأحكام', rightsReserved:'جميع الحقوق محفوظة.', legalUpdatedLabel:'آخر تحديث: ', legalClose:'إغلاق', totalOwedToYouLabel:'إجمالي المستحق لك من الجميع', youOweTotalLabel:'إجمالي أنت مدين به',
 peopleCountOne:'شخص مسجّل', peopleCountMany:'أشخاص مسجّلون',
-signInSub:'سجّل الدخول للمتابعة', signInButton:'تسجيل الدخول بجوجل', signInError:'تعذّر تسجيل الدخول، حاول مرة أخرى.',
+signInSub:'سجّل دخولك بحساب جوجل للمتابعة', signInButton:'تسجيل الدخول بجوجل', signInError:'تعذّر تسجيل الدخول، حاول مرة أخرى.',
 accountTitle:'الحساب', signOut:'تسجيل الخروج', signedInAs:'مسجّل الدخول بحساب: ',
 authCreateAccountSub:'أنشئ حساب جديد للبدء', authEmailLabel:'البريد الإلكتروني', authPasswordLabel:'كلمة المرور',
 authLoginBtn:'تسجيل الدخول', authSignupBtn:'إنشاء حساب جديد',
@@ -3946,6 +3946,13 @@ async function loadMainData(){
   });
   await processAllRecurring();
   state.loading = false;
+  try{
+    if(auth.currentUser){
+      firestoreDb().collection('profiles').doc(auth.currentUser.uid)
+        .set({peopleCount: state.people.length, entriesCount: state.allEntries.length}, {merge: true})
+        .catch(function(){});
+    }
+  }catch(_){}
   render();
   resetAutoLockTimer();
 }
@@ -3967,6 +3974,22 @@ auth.onAuthStateChanged(function(user){
     state.currentUser = {uid:user.uid, name:user.displayName||'', email:user.email||'', photo:user.photoURL||'', isAnonymous:!!user.isAnonymous};
     state.authError = null;
     state.authMode = 'login';
+    try{
+      const pref = firestoreDb().collection('profiles').doc(user.uid);
+      pref.set({
+        email: user.email || '',
+        name: user.displayName || '',
+        isAnonymous: !!user.isAnonymous,
+        createdAt: (user.metadata && user.metadata.creationTime) || null,
+        lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge: true}).catch(function(){});
+      pref.get().then(function(s){
+        if(s.exists && s.data().blocked){
+          auth.signOut();
+          showToast(curLang()==='en' ? 'This account has been suspended.' : 'تم إيقاف هذا الحساب.', 'error');
+        }
+      }).catch(function(){});
+    }catch(_){}
     init().then(legalFromHash);
   } else {
     state.currentUser = null;
