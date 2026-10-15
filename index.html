@@ -2225,6 +2225,7 @@ function renderSettingsModal(m){
     +'<h3 class="modal-title">'+t('settingsTitle')+'</h3>'
     +'<div class="settings-block" style="margin-top:0;"><div class="field-label" style="margin-top:0;">'+t('accountTitle')+'</div>'
       +'<p class="modal-text" style="margin-top:0;">'+t('signedInAs')+escapeHtml(state.currentUser ? (state.currentUser.isAnonymous ? t('guestBadge') : state.currentUser.email) : '')+'</p>'
+      +(state.isAdmin ? '<button class="btn-ghost full" data-action="open-admin">'+ICONS.shield+' '+(curLang()==='en' ? 'Admin dashboard' : 'لوحة الإدارة')+'</button>' : '')
       +'<button class="btn-ghost full" data-action="sign-out">'+t('signOut')+'</button>'
     +'</div>'
     +'<hr class="modal-divider" />'
@@ -3835,6 +3836,9 @@ app.addEventListener('click', async function(e){
       state.authError = null;
       renderSignInGate();
       break;
+    case 'open-admin':
+      window.location.href = '/admin.html';
+      break;
     case 'sign-out':
       await signOutUser();
       break;
@@ -3990,8 +3994,15 @@ auth.onAuthStateChanged(function(user){
         }
       }).catch(function(){});
     }catch(_){}
+    state.isAdmin = false;
+    if(!user.isAnonymous){
+      firestoreDb().collection('admins').doc(user.uid).get().then(function(a){
+        if(a.exists){ state.isAdmin = true; if(!state.loading && !state.modal && !state.locked) render(); }
+      }).catch(function(){});
+    }
     init().then(legalFromHash);
   } else {
+    state.isAdmin = false;
     state.currentUser = null;
     state.loading = true;
     state.view = 'list';
