@@ -1379,6 +1379,9 @@ const GUEST_BLOCKED_ACTIONS = new Set([
   'toggle-recurring','delete-recurring',
   'toggle-pin','archive-person','unarchive-person'
 ]);
+/* رابط لوحة الإدارة (دومين منفصل). ضع الرابط الكامل هنا، مثال: 'https://hisbetarab-admin.vercel.app'
+   إذا تُرك فارغاً يُفتح /admin.html على نفس الدومين. */
+const ADMIN_URL = 'https://hisbetarab-admin.vercel.app';
 /* ---------- Legal: privacy policy, terms, copyright ---------- */
 const LEGAL_CONFIG = {
   startYear: 2026,
@@ -3837,7 +3840,7 @@ app.addEventListener('click', async function(e){
       renderSignInGate();
       break;
     case 'open-admin':
-      window.location.href = '/admin.html';
+      window.location.href = ADMIN_URL || '/admin.html';
       break;
     case 'sign-out':
       await signOutUser();
